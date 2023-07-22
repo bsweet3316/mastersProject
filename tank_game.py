@@ -9,6 +9,7 @@ import pygame
 from tank import Tank
 from cpu_tank import CpuTank
 from bullet import Bullet
+from barrier import Barrier
 import math
 
 from pygame.locals import (
@@ -44,9 +45,10 @@ all_sprites.append(tank)
 
 clock = pygame.time.Clock()
 
-paths = cpuTank.find_path(all_sprites, screen)
+for i in range(5,30):
+    
+    all_sprites.append(Barrier(i*20,i*10))
 
-print(paths)
 
 running = True
 
@@ -93,14 +95,8 @@ while running:
            running = False
            
     pressed_keys = pygame.key.get_pressed()
-    cpuTank.generateMap(all_sprites,screen)
-    
-    paths = cpuTank.find_path(all_sprites, screen)
-    cpuTank.move_to_destination(paths, screen)
-    
-    for point in paths:
-        pygame.draw.rect(screen, pygame.Color('green'), (point[0] * 20, point[1] * 20, 20, 20))
 
+    cpuTank.cpuStateMachine(all_sprites, screen)    
 
     for bullet in bullets:
         bullet.move()

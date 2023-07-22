@@ -13,34 +13,54 @@ import random
 dRow = [ -1, 0, 1, 0]
 dCol = [ 0, 1, 0, -1]
 
+GRID_SIZE = 10
+
 class CpuTank(Tank):
     
     def __init__(self, x, y, color):
         
         super(CpuTank, self).__init__(x, y, color)
         
-        randX = random.randint(0, 50)
-        randY = random.randint(0, 30)
+        randX = random.randint(3, 97)
+        randY = random.randint(3, 57)
         self.destination = (randX, randY)
         self.path = []
+        self.state = 1
+        self.destinationReached = True
+        
+    def chooseDestination(self, game_map): 
+        valid = False
+        
+        newDest = (0,0)
+        
+        while not valid:
+            randX = random.randint(3, 97)
+            randY = random.randint(3, 57)
+            newDest = (randX, randY)
+            
+            if game_map[randX][randY] == 0:
+                valid = True
+                
+        self.destination = newDest
+        print(self.destination)
         
         
 
     def generateMap(self, all_sprites, screen):
         
-        m, n = int(1000/20), int(600/20)
+        m, n = int(1000/GRID_SIZE), int(600/GRID_SIZE)
         
         game_map = [[0] * n for i in range(m)]
         
         for sprite in all_sprites:
             
             topLeftX, topLeftY = sprite.rect.topleft
-            topLeftX = int(topLeftX/20)
-            topLeftY = int(topLeftY/20)
+            topLeftX = int(topLeftX/GRID_SIZE)
+            topLeftY = int(topLeftY/GRID_SIZE)
             
             bottomRightX, bottomRightY = sprite.rect.bottomright
-            bottomRightX = int(bottomRightX/20)
-            bottomRightY = int(bottomRightY/20)
+            bottomRightX = int(bottomRightX/GRID_SIZE)
+            bottomRightY = int(bottomRightY/GRID_SIZE)
             
             
             for i in range(topLeftX, bottomRightX+1):
@@ -50,9 +70,9 @@ class CpuTank(Tank):
         for j in range(0, len(game_map)):
             for i in range(0, len(game_map[0])):
                 if game_map[j][i] == 0:
-                    pygame.draw.rect(screen, pygame.Color('blue'), ((j*20), (i*20), 20, 20))
+                    pygame.draw.rect(screen, pygame.Color('blue'), ((j*GRID_SIZE), (i*GRID_SIZE), GRID_SIZE, GRID_SIZE))
                 else:
-                    pygame.draw.rect(screen, pygame.Color('red'), ((j*20), (i*20), 20, 20))
+                    pygame.draw.rect(screen, pygame.Color('red'), ((j*GRID_SIZE), (i*GRID_SIZE), GRID_SIZE, GRID_SIZE))
                     
         return game_map
         
@@ -84,12 +104,11 @@ class CpuTank(Tank):
                     seen.add((x2, y2))
   
     
-    def find_path(self, all_sprites, screen):
-        game_map = self.generateMap(all_sprites, screen)
+    def find_path(self, game_map):
         
         x,y = self.rect.center
-        x = int(x/20)
-        y = int(y/20)
+        x = int(x/GRID_SIZE)
+        y = int(y/GRID_SIZE)
         
         source =(x,y)
         
@@ -99,52 +118,57 @@ class CpuTank(Tank):
     
     def move_to_destination(self, path, screen):
         
-        print(path)
+        if len(path) == 1:
+            return True
+        
         x,y = self.pos
         
         
         next_point_x, next_point_y = path[0]
-        x = math.floor(x/20)
-        y = math.floor(y/20)
-        print(f'{x}, {y}')
-        if (x == next_point_x and y == next_point_y):
-            print(f'PATH 1 chosen:  {path[1]}')
+        x = math.floor(x/GRID_SIZE)
+        y = math.floor(y/GRID_SIZE)
+    
+        if (x == next_point_x and y == next_point_y) and len(path) > 1:
             next_point_x, next_point_y = path[1]
             
         dx = next_point_x - x
         dy = next_point_y - y
         
-        print(f'NEXT:  {next_point_x},{next_point_y}')
+        
         desired_angle = math.degrees(math.atan2(dy,dx))
         self.angle_speed = 0
         self.speed = 0
         
         curr_angle =self.angle
         
-        print(f'current angle: {curr_angle}')
-        print(f'Desired: {desired_angle}')
         if (curr_angle != int(desired_angle)):
             if curr_angle > desired_angle:    
                 
-                self.angle_speed = 3
-            else:
                 self.angle_speed = -3
+            else:
+                self.angle_speed = 3
         else:
             self.speed = 2
             
         self.updateAndDraw(screen)
         
+        return False
         
+    def cpuStateMachine(self, all_sprites, screen):
+        game_map = self.generateMap(all_sprites, screen)
         
-    def get_angle_on_circle(self, angle):
-        angle = abs(angle)
-        print(angle)
-        while angle < 0:
-            angle = angle + 360
-        while angle > 360:
-            angle = angle - 360
-            
+        print(self.state)
+        if self.state == 1:
+            if self.destinationReached:
+                print('Choosing Dest')
+                self.chooseDestination(game_map)
+                self.destinationReached = False
+            else:
+                path = self.find_path(game_map)  
+                for point in path:
+                    pygame.draw.rect(screen, pygame.Color('green'), (point[0]*10, point[1]*10, 10, 10))
                 
-        return angle
+                self.destinationReached =  self.move_to_destination(path, screen)
+        
             
             
