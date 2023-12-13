@@ -28,7 +28,7 @@ class Tank(pygame.sprite.Sprite):
         
         
         
-        self.cannon = pygame.Surface((30, 10),pygame.SRCALPHA)
+        self.cannon = pygame.Surface((30, 10), pygame.SRCALPHA)
         pygame.draw.polygon(self.cannon, pygame.Color(color), 
                             [(0,0), (30, 5), (0, 10)])
         
@@ -47,6 +47,7 @@ class Tank(pygame.sprite.Sprite):
         pygame.draw.polygon(self.tank_body, pygame.Color('black'), 
                             [(0,25),(0,27),(7,27),((7,25))])
         
+        
         self.body_pos = Vector2(x,y)
         self.direction = Vector2(1,0)
         self.speed = 0
@@ -63,16 +64,18 @@ class Tank(pygame.sprite.Sprite):
         
         
         
-    def update(self):
+    def update(self, barriers):
 
         if self.angle_speed != 0:
             self.direction.rotate_ip(self.angle_speed)
             self.angle += self.angle_speed
             self.tank_body = pygame.transform.rotate(self.orig_body, -self.angle)
             self.rect = self.tank_body.get_rect(center=self.rect.center)
-        self.body_pos += self.direction * self.speed
-        self.rect.center = self.body_pos
         
+        updateMovement = self.direction * self.speed
+        
+        self.body_pos += updateMovement
+        self.rect.center = self.body_pos
         
         
         
@@ -85,6 +88,14 @@ class Tank(pygame.sprite.Sprite):
         if self.rect.bottom >= 600:
             self.rect.bottom = 600
         
+        for barrier in barriers:
+            
+            if self.rect.colliderect(barrier):
+                self.body_pos -= updateMovement
+                self.rect.center = self.body_pos
+
+                
+            
         self.cannon_rect.center = self.rect.center
         self.pos = self.body_pos
         
@@ -95,8 +106,8 @@ class Tank(pygame.sprite.Sprite):
         self.cannon = pygame.transform.rotate(self.orig_cannon, -angle)
         self.cannon_rect = self.cannon.get_rect(center=self.cannon_rect.center)
         
-    def updateAndDraw(self, window):
-        self.update()
+    def updateAndDraw(self, window, barriers):
+        self.update(barriers)
         self.rotate()
         
         window.blit(self.tank_body, self.rect)

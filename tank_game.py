@@ -10,7 +10,9 @@ from tank import Tank
 from cpu_tank import CpuTank
 from bullet import Bullet
 from barrier import Barrier
+from barrier_map_generator import chooseRandomBoard
 import math
+import time
 
 from pygame.locals import (
     K_UP,
@@ -35,20 +37,33 @@ tank = Tank(500, 300, (0,0,0))
 
 cpuTank = CpuTank(200, 400, (255,255,0))
 
+timeSinceLastShot = time.time()
+
+playerScore = 0
+cpuScore = 0
+
+
 bullets = []
 tanks = []
+barriers = []
 
 tanks.append(tank)
 tanks.append(cpuTank)
 
 all_sprites.append(tank)
+board = chooseRandomBoard()
+
+for i in range(0, len(board)):
+    for j in range(0, len(board[0])):
+        if board[i][j] > 0:
+            newBarrier = Barrier(i*10, j*10, board[i][j])
+            barriers.append(newBarrier)
+            all_sprites.append(newBarrier)
 
 clock = pygame.time.Clock()
 
-for i in range(5,30):
-    
-    all_sprites.append(Barrier(i*20,i*10))
-
+pygame.font.init() 
+my_font = pygame.font.SysFont('Comic Sans MS', 30)
 
 running = True
 
@@ -88,26 +103,52 @@ while running:
            dir_x, dir_y = mouse_x - start_x, mouse_y - start_y
            distance = math.sqrt(dir_x**2 + dir_y**2)
            if distance > 0:
-               new_bullet = Bullet(start_x, start_y, dir_x/distance, dir_y/distance)
+               new_bullet = Bullet(start_x, start_y, dir_x/distance, dir_y/distance, 1)
                bullets.append(new_bullet)
     # Check for QUIT event. If QUIT, then set running to false.
        elif event.type == QUIT:
            running = False
            
     pressed_keys = pygame.key.get_pressed()
-
-    cpuTank.cpuStateMachine(all_sprites, screen)    
+    fireBullet = cpuTank.cpuStateMachine(all_sprites, screen, tank, barriers)    
+    if fireBullet and time.time() - timeSinceLastShot > 1:
+        angleToFire = math.radians(cpuTank.cannon_angle)
+        new_bullet = Bullet(cpuTank.pos[0], cpuTank.pos[1], math.cos(angleToFire), math.sin(angleToFire), 2)
+        bullets.append(new_bullet)
+        timeSinceLastShot = time.time()
 
     for bullet in bullets:
         bullet.move()
         bullet.draw(screen)
-        
-        if bullet.checkBoundary():
+        if bullet.checkBoundary() or pygame.sprite.spritecollideany(bullet, barriers):
+            bullets.pop(bullets.index(bullet))
+        if pygame.sprite.collide_rect(bullet, cpuTank) and bullet.playerId != 2:
+            playerScore = playerScore + 1
+            bullets.pop(bullets.index(bullet))
+        if pygame.sprite.collide_rect(bullet, tank) and bullet.playerId != 1:
+            cpuScore = cpuScore + 1
             bullets.pop(bullets.index(bullet))
             
-    tank.updateAndDraw(screen)
-
+            
+    tank.updateAndDraw(screen, barriers)
+    
+    intersectionFound = False
+    for barrier in barriers:
+        result = barrier.checkLineOfSight([cpuTank.pos[0], cpuTank.pos[1], tank.pos[0], tank.pos[1]])
+        barrier.draw(screen)
+        if len(result) > 0:
+            intersectionFound = True
         
+        
+        
+    pygame.draw.line(screen, pygame.Color('red'), cpuTank.pos, tank.pos)
+
+    cpuTank.checkLineOfSight(tank, intersectionFound)
+        
+    player_score_text = my_font.render(str(playerScore), False, (0, 0, 0))
+    screen.blit(player_score_text, (20,20))
+    cpu_score_text = my_font.render(str(cpuScore), False, (0, 0, 0))
+    screen.blit(cpu_score_text, (920,20))
 
 
 

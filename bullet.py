@@ -14,13 +14,14 @@ def calc_new_xy(old_xy, speed, angle_in_degrees):
 
 class Bullet(pygame.sprite.Sprite):
     
-    def __init__(self, x, y, dirx, diry):
+    def __init__(self, x, y, dirx, diry, playerId):
         super(Bullet, self).__init__()
         
         self.x = x
         self.y = y
         self.dirx = dirx
         self.diry = diry
+        self.playerId = playerId
         
         self.image = pygame.Surface((5,5))
         self.image.fill((255,0,0))
