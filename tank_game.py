@@ -11,6 +11,7 @@ from cpu_tank import CpuTank
 from bullet import Bullet
 from barrier import Barrier
 from barrier_map_generator import chooseRandomBoard
+from nnSightLine import NNSightLine
 import math
 import time
 
@@ -52,18 +53,27 @@ tanks.append(cpuTank)
 
 all_sprites.append(tank)
 board = chooseRandomBoard()
-
+'''
 for i in range(0, len(board)):
     for j in range(0, len(board[0])):
         if board[i][j] > 0:
             newBarrier = Barrier(i*10, j*10, board[i][j])
             barriers.append(newBarrier)
             all_sprites.append(newBarrier)
+'''
 
+barriers.append( Barrier(200,400,100,100, 1))
 clock = pygame.time.Clock()
 
 pygame.font.init() 
 my_font = pygame.font.SysFont('Comic Sans MS', 30)
+
+sightLines = []
+
+for i in range(0, 9):
+    
+    sightLines.append(NNSightLine(i*10))
+
 
 running = True
 
@@ -134,16 +144,16 @@ while running:
     
     intersectionFound = False
     for barrier in barriers:
-        result = barrier.checkLineOfSight([cpuTank.pos[0], cpuTank.pos[1], tank.pos[0], tank.pos[1]])
+        result = [1] #barrier.checkLineOfSight([cpuTank.pos[0], cpuTank.pos[1], tank.pos[0], tank.pos[1]])
         barrier.draw(screen)
         if len(result) > 0:
             intersectionFound = True
-        
-        
+    for sightLine in sightLines:
+        sightLine.updateDistance(tank.pos[0], tank.pos[1], tank.player_cannon_angle-45, barriers, screen)
         
     pygame.draw.line(screen, pygame.Color('red'), cpuTank.pos, tank.pos)
 
-    cpuTank.checkLineOfSight(tank, intersectionFound)
+    #cpuTank.checkLineOfSight(tank, intersectionFound)
         
     player_score_text = my_font.render(str(playerScore), False, (0, 0, 0))
     screen.blit(player_score_text, (20,20))

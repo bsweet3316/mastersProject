@@ -62,6 +62,8 @@ class Tank(pygame.sprite.Sprite):
         self.cannon_rect = self.cannon.get_rect(center=(x,y))
         self.rect = self.tank_body.get_rect(center=(x,y))
         
+        self.player_cannon_angle = 0
+        
         
         
     def update(self, barriers):
@@ -103,6 +105,9 @@ class Tank(pygame.sprite.Sprite):
     def rotate(self):
         direction = pygame.mouse.get_pos() - self.pos
         radius, angle = direction.as_polar()
+        
+        self.player_cannon_angle = angle
+        
         self.cannon = pygame.transform.rotate(self.orig_cannon, -angle)
         self.cannon_rect = self.cannon.get_rect(center=self.cannon_rect.center)
         
