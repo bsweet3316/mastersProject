@@ -80,18 +80,11 @@ class Barrier(pygame.sprite.Sprite):
         
         for r in rect_lines:
             rx1,ry1,rx2,ry2 = r
-            print(f'{rx1} {rx2} {ry1} {ry2}')
             if ( not linesAreParallel( line_x1,line_y1, line_x2,line_y2, rx1,ry1, rx2,ry2 ) ):    # not parallel
                 pX, pY = intersectionPoint( line_x1,line_y1, line_x2,line_y2, rx1,ry1, rx2,ry2 )  # so intersecting somewhere
                 
                 pX = round( pX )
                 pY = round( pY )
-                
-                print(f'{pX}  {pY}')
-                print(rect.collidepoint( pX, pY ))
-                
-                print(f'MIN X: {min( line_x1, line_x2 )} Y: {min( line_y1, line_y2 )}')
-                print(f'MAX X: {max( line_x1, line_x2 )} Y: {max( line_y1, line_y2 )}')
 
                 
                 # Lines intersect, but is on the rectangle, and between the line end-points?

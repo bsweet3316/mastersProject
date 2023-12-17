@@ -33,6 +33,7 @@ background_color = (255,255,255)
 screen = pygame.display.set_mode((1000,600))
 
 all_sprites = []
+nonAiSprites = []
 
 tank = Tank(500, 300, (0,0,0))
 
@@ -51,18 +52,25 @@ barriers = []
 tanks.append(tank)
 tanks.append(cpuTank)
 
+nonAiSprites.append(cpuTank)
+
 all_sprites.append(tank)
 board = chooseRandomBoard()
-'''
-for i in range(0, len(board)):
-    for j in range(0, len(board[0])):
-        if board[i][j] > 0:
-            newBarrier = Barrier(i*10, j*10, board[i][j])
-            barriers.append(newBarrier)
-            all_sprites.append(newBarrier)
-'''
 
-barriers.append( Barrier(200,400,100,100, 1))
+
+barriers.append(Barrier(70,70,70,70,1))
+barriers.append(Barrier(70,460,70,70,1))
+barriers.append(Barrier(860,70,70,70,1))
+barriers.append(Barrier(860,460,70,70,1))
+
+barriers.append(Barrier(340,130,50,340,1))
+barriers.append(Barrier(610,130,50,340,1))
+
+for barrier in barriers:
+    all_sprites.append(barrier)
+    nonAiSprites.append(barrier)
+
+
 clock = pygame.time.Clock()
 
 pygame.font.init() 
@@ -70,9 +78,9 @@ my_font = pygame.font.SysFont('Comic Sans MS', 30)
 
 sightLines = []
 
-for i in range(0, 9):
+for i in range(0, 19):
     
-    sightLines.append(NNSightLine(i*10))
+    sightLines.append(NNSightLine(i*5))
 
 
 running = True
@@ -115,6 +123,7 @@ while running:
            if distance > 0:
                new_bullet = Bullet(start_x, start_y, dir_x/distance, dir_y/distance, 1)
                bullets.append(new_bullet)
+               nonAiSprites.append(new_bullet)
     # Check for QUIT event. If QUIT, then set running to false.
        elif event.type == QUIT:
            running = False
@@ -125,6 +134,7 @@ while running:
         angleToFire = math.radians(cpuTank.cannon_angle)
         new_bullet = Bullet(cpuTank.pos[0], cpuTank.pos[1], math.cos(angleToFire), math.sin(angleToFire), 2)
         bullets.append(new_bullet)
+        nonAiSprites.append(new_bullet)
         timeSinceLastShot = time.time()
 
     for bullet in bullets:
@@ -132,28 +142,32 @@ while running:
         bullet.draw(screen)
         if bullet.checkBoundary() or pygame.sprite.spritecollideany(bullet, barriers):
             bullets.pop(bullets.index(bullet))
-        if pygame.sprite.collide_rect(bullet, cpuTank) and bullet.playerId != 2:
+            nonAiSprites.pop(nonAiSprites.index(bullet))
+        elif pygame.sprite.collide_rect(bullet, cpuTank) and bullet.playerId != 2:
             playerScore = playerScore + 1
             bullets.pop(bullets.index(bullet))
-        if pygame.sprite.collide_rect(bullet, tank) and bullet.playerId != 1:
+            nonAiSprites.pop(nonAiSprites.index(bullet))
+
+        elif pygame.sprite.collide_rect(bullet, tank) and bullet.playerId != 1:
             cpuScore = cpuScore + 1
             bullets.pop(bullets.index(bullet))
+            nonAiSprites.pop(nonAiSprites.index(bullet))
+
             
             
     tank.updateAndDraw(screen, barriers)
     
     intersectionFound = False
     for barrier in barriers:
-        result = [1] #barrier.checkLineOfSight([cpuTank.pos[0], cpuTank.pos[1], tank.pos[0], tank.pos[1]])
+        result = barrier.checkLineOfSight([cpuTank.pos[0], cpuTank.pos[1], tank.pos[0], tank.pos[1]])
         barrier.draw(screen)
         if len(result) > 0:
             intersectionFound = True
     for sightLine in sightLines:
-        sightLine.updateDistance(tank.pos[0], tank.pos[1], tank.player_cannon_angle-45, barriers, screen)
+        sightLine.updateDistance(tank.pos[0], tank.pos[1], tank.player_cannon_angle-45, nonAiSprites, screen)
         
+    cpuTank.checkLineOfSight(tank, intersectionFound)
     pygame.draw.line(screen, pygame.Color('red'), cpuTank.pos, tank.pos)
-
-    #cpuTank.checkLineOfSight(tank, intersectionFound)
         
     player_score_text = my_font.render(str(playerScore), False, (0, 0, 0))
     screen.blit(player_score_text, (20,20))

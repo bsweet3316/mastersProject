@@ -10,6 +10,8 @@ import collections
 import math
 import random
 
+from pygame.locals import *
+
 dRow = [ -1, 0, 1, 0]
 dCol = [ 0, 1, 0, -1]
 
@@ -95,22 +97,14 @@ class CpuTank(Tank):
         
         game_map = [[0] * n for i in range(m)]
         
-        for sprite in all_sprites:
-            
-            topLeftX, topLeftY = sprite.rect.topleft
-            topLeftX = int(topLeftX/GRID_SIZE)
-            topLeftY = int(topLeftY/GRID_SIZE)
-            
-            bottomRightX, bottomRightY = sprite.rect.bottomright
-            bottomRightX = int(bottomRightX/GRID_SIZE)
-            bottomRightY = int(bottomRightY/GRID_SIZE)
-            
-        
-            for i in range(topLeftX-1, bottomRightX+2):
-                for j in range(topLeftY-1, bottomRightY+2):
-                    if 0 < i < len(game_map) and 0 < j < len(game_map[0]):
+        for i in range(0, len(game_map)):
+            for j in range(0, len(game_map[0])):
+                for sprite in all_sprites:
+                    gridRect = Rect((i*10 )-11 , (j*10) - 11, 32,32)
+                    if sprite.rect.colliderect(gridRect):
                         game_map[i][j] = 1
-                    
+                        
+
         return game_map
         
     def is_valid_cell(self, x, y, game_map):
@@ -177,11 +171,8 @@ class CpuTank(Tank):
         curr_angle = self.normalize_angle(self.angle)
             
         if (curr_angle != int(desired_angle)):
-            
-            print(f'{curr_angle}  target: {desired_angle}')
-            
+                        
             diff = abs(curr_angle - desired_angle)
-            print(f'dist to desired {diff} other way: {360-diff}')
             if curr_angle > desired_angle:    
                 if (360-diff) > diff:
                     self.angle_speed = -3
@@ -213,7 +204,6 @@ class CpuTank(Tank):
         
         
         if not intersectionFound:
-            print(f'{left_angle}  {angle}  {left_angle - VIEW_ANGLE*2}')
             if  (left_angle > angle > (left_angle - VIEW_ANGLE*2) or (right_angle + VIEW_ANGLE*2) < angle < right_angle) and radius <= VIEW_LENGTH:
                 self.angle_speed = 0
                 self.speed = 0
